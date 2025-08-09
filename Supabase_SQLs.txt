@@ -1,3 +1,5 @@
+hi
+
 -- 1. PROFILES TABLE
 -- Stores public user data, linked to the authentication system.
 CREATE TABLE public.profiles (
@@ -277,4 +279,26 @@ WITH CHECK (
 );
 
 ####################
+
+CREATE OR REPLACE FUNCTION upvote_report(report_id_to_upvote UUID)
+RETURNS void AS $$
+BEGIN
+  -- Check if the user has already upvoted this report
+  IF NOT EXISTS (SELECT 1 FROM public.upvotes WHERE report_id = report_id_to_upvote AND user_id = auth.uid()) THEN
+    -- If not, insert a new upvote
+    INSERT INTO public.upvotes(report_id, user_id)
+    VALUES(report_id_to_upvote, auth.uid());
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+#############################
+
+CREATE OR REPLACE FUNCTION downvote_report(report_id_to_downvote UUID)
+RETURNS void AS $$
+BEGIN
+  DELETE FROM public.upvotes
+  WHERE report_id = report_id_to_downvote AND user_id = auth.uid();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
